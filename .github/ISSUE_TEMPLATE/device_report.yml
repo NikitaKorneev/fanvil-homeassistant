@@ -1,0 +1,26 @@
+name: Device report / new model
+description: Report how the integration works with your Fanvil device
+labels: [device]
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Model and firmware
+      placeholder: i62, 2.12.51
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Home Assistant version
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What works and what does not
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Device page → ⋮ → Download diagnostics (secrets are redacted). Attach the file.

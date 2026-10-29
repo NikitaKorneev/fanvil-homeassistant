@@ -1,0 +1,178 @@
+{
+  "title": "Fanvil",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect a Fanvil door phone",
+        "description": "Enter the HTTP API credentials. Basic authentication is confirmed on firmware 2.12.51. HTTPS requires a trusted certificate.",
+        "data": {
+          "host": "Host",
+          "port": "HTTP/HTTPS port",
+          "username": "API username",
+          "password": "API password",
+          "ssl": "Use HTTPS",
+          "auth_type": "Authentication"
+        }
+      },
+      "reconfigure": {
+        "title": "Connect a Fanvil door phone",
+        "description": "Enter the HTTP API credentials. Basic authentication is confirmed on firmware 2.12.51. HTTPS requires a trusted certificate.",
+        "data": {
+          "host": "Host",
+          "port": "HTTP/HTTPS port",
+          "username": "API username",
+          "password": "API password",
+          "ssl": "Use HTTPS",
+          "auth_type": "Authentication"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Connect a Fanvil door phone",
+        "description": "Enter the HTTP API credentials. Basic authentication is confirmed on firmware 2.12.51. HTTPS requires a trusted certificate.",
+        "data": {
+          "host": "Host",
+          "port": "HTTP/HTTPS port",
+          "username": "API username",
+          "password": "API password",
+          "ssl": "Use HTTPS",
+          "auth_type": "Authentication"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "Enter an IPv4 address or hostname without a scheme or path.",
+      "invalid_auth": "The panel rejected the credentials or returned a login page.",
+      "cannot_connect": "Cannot connect. Check the address, port, and network.",
+      "unsupported_model": "The panel did not report its model. Check that this is a Fanvil device with the HTTP API.",
+      "invalid_response": "Unexpected API response. Check that the panel HTTP API is available.",
+      "wrong_device": "A different panel is responding at this address.",
+      "unknown": "Unexpected error. See the Home Assistant log."
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "reconfigure_successful": "Connection settings updated.",
+      "reauth_successful": "Credentials updated.",
+      "not_configured": "This device is not configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "ip_address": {
+        "name": "IP address"
+      },
+      "firmware": {
+        "name": "Firmware"
+      },
+      "uptime": {
+        "name": "Uptime"
+      },
+      "sip_registration": {
+        "name": "SIP {line} registration code"
+      },
+      "call_state": {
+        "name": "Line {line} call state"
+      },
+      "sip_number": {
+        "name": "SIP {line} number"
+      },
+      "action_url": {
+        "name": "Action URL",
+        "state": {
+          "on": "On",
+          "partial": "Partly (some events used by another system)",
+          "off": "Off"
+        },
+        "state_attributes": {
+          "home_assistant_url": {
+            "name": "Home Assistant address"
+          },
+          "events": {
+            "name": "Events"
+          },
+          "used_by_other_system": {
+            "name": "Used by another system"
+          },
+          "not_supported": {
+            "name": "Not supported"
+          }
+        }
+      }
+    },
+    "binary_sensor": {
+      "sip_registered": {
+        "name": "SIP {number} registered"
+      },
+      "relay_active": {
+        "name": "Relay {number} active"
+      },
+      "input_open": {
+        "name": "Input {number} open"
+      }
+    },
+    "button": {
+      "pulse_relay": {
+        "name": "Open relay {number} (pulse)"
+      },
+      "restart": {
+        "name": "Restart"
+      }
+    },
+    "switch": {
+      "relay": {
+        "name": "Relay {number} (hold open)"
+      }
+    },
+    "event": {
+      "call": {
+        "name": "Call",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "incoming": "Incoming",
+              "outgoing": "Outgoing",
+              "answered": "Answered",
+              "ended": "Ended",
+              "missed": "Missed"
+            }
+          }
+        }
+      },
+      "panel": {
+        "name": "Panel event",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "key": "Button pressed",
+              "input_1_triggered": "Input 1 triggered",
+              "input_1_reset": "Input 1 reset",
+              "input_2_triggered": "Input 2 triggered",
+              "input_2_reset": "Input 2 reset",
+              "boot": "Booted",
+              "tamper": "Tamper",
+              "motion": "Motion"
+            }
+          }
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Fanvil options",
+        "description": "Action URL: the panel reports events (calls, relay, inputs, SIP, address change) to Home Assistant at once. Turn it off if the panel's Action URLs are used by another system: the integration never overwrites URLs set by others and removes only its own.",
+        "data": {
+          "action_url": "Configure Action URL on the panel",
+          "ha_url": "Home Assistant address for the panel (empty - automatic)",
+          "poll_interval": "Polling interval (seconds)"
+        },
+        "data_description": {
+          "ha_url": "For example http://192.168.1.10:8123. Automatic: the IP Home Assistant uses to reach the panel."
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "Enter an address starting with http:// or https://"
+    }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "title": "Fanvil",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Подключение домофона Fanvil",
+        "description": "Укажите учётные данные HTTP API. Для прошивки 2.12.51 подтверждена авторизация Basic. При HTTPS сертификат должен быть доверенным.",
+        "data": {
+          "host": "Адрес устройства",
+          "port": "Порт HTTP/HTTPS",
+          "username": "Имя пользователя API",
+          "password": "Пароль API",
+          "ssl": "Использовать HTTPS",
+          "auth_type": "Авторизация"
+        }
+      },
+      "reconfigure": {
+        "title": "Подключение домофона Fanvil",
+        "description": "Укажите учётные данные HTTP API. Для прошивки 2.12.51 подтверждена авторизация Basic. При HTTPS сертификат должен быть доверенным.",
+        "data": {
+          "host": "Адрес устройства",
+          "port": "Порт HTTP/HTTPS",
+          "username": "Имя пользователя API",
+          "password": "Пароль API",
+          "ssl": "Использовать HTTPS",
+          "auth_type": "Авторизация"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Подключение домофона Fanvil",
+        "description": "Укажите учётные данные HTTP API. Для прошивки 2.12.51 подтверждена авторизация Basic. При HTTPS сертификат должен быть доверенным.",
+        "data": {
+          "host": "Адрес устройства",
+          "port": "Порт HTTP/HTTPS",
+          "username": "Имя пользователя API",
+          "password": "Пароль API",
+          "ssl": "Использовать HTTPS",
+          "auth_type": "Авторизация"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "Введите IPv4-адрес или имя хоста без протокола и пути.",
+      "invalid_auth": "Панель отклонила учётные данные или вернула страницу входа.",
+      "cannot_connect": "Не удалось подключиться к панели. Проверьте адрес, порт и сеть.",
+      "unsupported_model": "Панель не сообщила модель. Проверьте, что это устройство Fanvil с HTTP API.",
+      "invalid_response": "Неожиданный ответ API. Проверьте доступность HTTP API на панели.",
+      "wrong_device": "По этому адресу отвечает другая панель.",
+      "unknown": "Непредвиденная ошибка. Подробности — в журнале Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Это устройство уже добавлено.",
+      "reconfigure_successful": "Параметры подключения обновлены.",
+      "reauth_successful": "Учётные данные обновлены.",
+      "not_configured": "Это устройство не настроено."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "ip_address": {
+        "name": "IP-адрес"
+      },
+      "firmware": {
+        "name": "Прошивка"
+      },
+      "uptime": {
+        "name": "Время работы"
+      },
+      "sip_registration": {
+        "name": "Код регистрации SIP {line}"
+      },
+      "call_state": {
+        "name": "Состояние вызова, линия {line}"
+      },
+      "sip_number": {
+        "name": "Номер SIP {line}"
+      },
+      "action_url": {
+        "name": "Action URL",
+        "state": {
+          "on": "Включён",
+          "partial": "Частично (часть событий занята другой системой)",
+          "off": "Выключен"
+        },
+        "state_attributes": {
+          "home_assistant_url": {
+            "name": "Адрес Home Assistant"
+          },
+          "events": {
+            "name": "События"
+          },
+          "used_by_other_system": {
+            "name": "Заняты другой системой"
+          },
+          "not_supported": {
+            "name": "Не поддерживаются"
+          }
+        }
+      }
+    },
+    "binary_sensor": {
+      "sip_registered": {
+        "name": "SIP {number} зарегистрирован"
+      },
+      "relay_active": {
+        "name": "Реле {number} активно"
+      },
+      "input_open": {
+        "name": "Вход {number} разомкнут"
+      }
+    },
+    "button": {
+      "pulse_relay": {
+        "name": "Открыть реле {number} (импульс)"
+      },
+      "restart": {
+        "name": "Перезагрузка"
+      }
+    },
+    "switch": {
+      "relay": {
+        "name": "Реле {number} (держать открытым)"
+      }
+    },
+    "event": {
+      "call": {
+        "name": "Звонок",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "incoming": "Входящий",
+              "outgoing": "Исходящий",
+              "answered": "Ответ",
+              "ended": "Завершён",
+              "missed": "Пропущенный"
+            }
+          }
+        }
+      },
+      "panel": {
+        "name": "Событие панели",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "key": "Нажата кнопка",
+              "input_1_triggered": "Вход 1 сработал",
+              "input_1_reset": "Вход 1 сброшен",
+              "input_2_triggered": "Вход 2 сработал",
+              "input_2_reset": "Вход 2 сброшен",
+              "boot": "Загрузилась",
+              "tamper": "Вскрытие корпуса",
+              "motion": "Движение"
+            }
+          }
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Настройки Fanvil",
+        "description": "Action URL: панель сразу сообщает Home Assistant о событиях (звонки, реле, входы, SIP, смена адреса). Выключите, если Action URL на панели использует другая система: чужие адреса интеграция не перезаписывает, а свои при выключении убирает.",
+        "data": {
+          "action_url": "Настраивать Action URL на панели",
+          "ha_url": "Адрес Home Assistant для панели (пусто — автоматически)",
+          "poll_interval": "Интервал опроса, секунды"
+        },
+        "data_description": {
+          "ha_url": "Например, http://192.168.1.10:8123. Автоматически — IP, с которого Home Assistant обращается к панели."
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "Адрес должен начинаться с http:// или https://"
+    }
+  }
+}
