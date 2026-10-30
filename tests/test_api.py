@@ -283,7 +283,7 @@ async def test_read_retried_after_html_stub_but_command_is_not(api_module, monke
         assert calls["device"] == 1
 
 
-async def test_relay_hold_and_sip_config(api_module):
+async def test_relay_hold_and_settings(api_module):
     seen = []
 
     async def handler(request):
@@ -311,9 +311,12 @@ async def test_relay_hold_and_sip_config(api_module):
         ]
         with pytest.raises(ValueError):
             await client.async_relay(1, "toggle", "long")
-        config = await client.async_read_sip_config()
+        config = await client.async_read_settings()
         assert config == {"sip.line.1.PhoneNumber": "201"}
-        assert not any("Pswd" in key for key in seen[-1][1]["config"])
+        requested = seen[-1][1]["config"]
+        assert not any("Pswd" in key for key in requested)
+        assert "phone.volume.HandFreeVol" in requested
+        assert "ipc.RtspAudioEnable" in requested
 
 
 def test_rtsp_url_escapes_credentials(api_module):

@@ -9,7 +9,7 @@ import asyncio
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import STATE_ON
+from homeassistant.const import STATE_ON, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -17,7 +17,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from . import FanvilConfigEntry
 from .api import FanvilError
-from .const import COMMAND_REFRESH_DELAY, relay_key
+from .const import COMMAND_REFRESH_DELAY, RTSP_AUDIO, relay_key
 from .coordinator import FanvilCoordinator
 from .entity import FanvilEntity
 
@@ -29,11 +29,14 @@ async def async_setup_entry(
 ) -> None:
     """One switch per relay the panel reports a state for."""
     coordinator = entry.runtime_data
-    async_add_entities(
+    entities: list[SwitchEntity] = [
         FanvilRelaySwitch(coordinator, relay)
         for relay in (1, 2)
         if coordinator.data.get(relay_key(relay), "").lower() in ("open", "close")
-    )
+    ]
+    if coordinator.data.get(RTSP_AUDIO) in ("0", "1"):
+        entities.append(FanvilCameraAudioSwitch(coordinator))
+    async_add_entities(entities)
 
 
 class FanvilRelaySwitch(FanvilEntity, SwitchEntity, RestoreEntity):
@@ -79,3 +82,35 @@ class FanvilRelaySwitch(FanvilEntity, SwitchEntity, RestoreEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self._async_command("off")
+
+
+class FanvilCameraAudioSwitch(FanvilEntity, SwitchEntity):
+    """Microphone sound in both camera streams (ipc.RtspAudioEnable).
+
+    The panel sends G.711: the live view plays it over WebRTC (go2rtc); the
+    HLS fallback of Home Assistant keeps only AAC and MP3 and plays no sound.
+    """
+
+    _attr_translation_key = "camera_audio"
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, coordinator: FanvilCoordinator) -> None:
+        super().__init__(coordinator, "camera_audio")
+
+    @property
+    def is_on(self) -> bool | None:
+        return {"1": True, "0": False}.get(self.coordinator.data.get(RTSP_AUDIO, ""))
+
+    async def _async_set(self, enabled: bool) -> None:
+        try:
+            await self.coordinator.async_write_settings(
+                {RTSP_AUDIO: "1" if enabled else "0"}
+            )
+        except FanvilError as err:
+            raise HomeAssistantError(str(err)) from err
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self._async_set(True)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self._async_set(False)

@@ -49,6 +49,7 @@ PLATFORMS = (
     Platform.CAMERA,
     Platform.EVENT,
     Platform.MEDIA_PLAYER,
+    Platform.NUMBER,
 )
 type FanvilConfigEntry = ConfigEntry[FanvilCoordinator]
 

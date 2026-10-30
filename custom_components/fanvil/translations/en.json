@@ -131,6 +131,9 @@
     "switch": {
       "relay": {
         "name": "Relay {number} (hold open)"
+      },
+      "camera_audio": {
+        "name": "Camera audio"
       }
     },
     "event": {
@@ -190,6 +193,11 @@
     "media_player": {
       "speaker": {
         "name": "Speaker"
+      }
+    },
+    "number": {
+      "volume": {
+        "name": "Volume"
       }
     }
   },

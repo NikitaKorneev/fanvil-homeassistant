@@ -22,7 +22,7 @@ from .const import (
     READ_RETRY_DELAY,
     REQUEST_GAP,
     SERIAL,
-    SIP_CONFIG_FIELDS,
+    SETTINGS_FIELDS,
     STATUS_FIELDS,
     TESTED_MODELS,
 )
@@ -347,9 +347,9 @@ class FanvilClient:
                 rejected.extend(key for key in data if key in part)
         return rejected
 
-    async def async_read_sip_config(self) -> dict[str, str]:
-        """Read SIP account settings (number, name, server). Never the password."""
-        return await self.async_read_config(SIP_CONFIG_FIELDS)
+    async def async_read_settings(self) -> dict[str, str]:
+        """Read SIP accounts (never the password), volume and camera audio."""
+        return await self.async_read_config(SETTINGS_FIELDS)
 
     async def async_relay(self, relay: int, action: str, mode: str) -> None:
         """Control one relay: on/off, once (panel timeout) or long (stay)."""

@@ -6,7 +6,7 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later
@@ -38,7 +38,7 @@ class FanvilCoordinator(DataUpdateCoordinator[dict[str, str]]):
         self, hass: HomeAssistant, entry: ConfigEntry, client: FanvilClient
     ) -> None:
         self.client = client
-        self._sip_config: dict[str, str] = {}
+        self._settings: dict[str, str] = {}
         self._polls = 0
         self._auth_failures = 0
         # Action URL: event -> ours/foreign/rejected; None - switched off.
@@ -69,13 +69,13 @@ class FanvilCoordinator(DataUpdateCoordinator[dict[str, str]]):
                 data = await self.client.async_update()
             if self._polls % SIP_CONFIG_EVERY == 0:
                 try:
-                    self._sip_config = await self.client.async_read_sip_config()
+                    self._settings = await self.client.async_read_settings()
                 except FanvilApiError as err:
                     # Older firmware without api/config: keep the status entities.
-                    _LOGGER.debug("SIP settings are not available: %s", err)
+                    _LOGGER.debug("Settings are not available: %s", err)
             self._polls += 1
             self._auth_failures = 0
-            return {**data, **self._sip_config}
+            return {**data, **self._settings}
         except FanvilAuthError as err:
             # While booting the panel briefly shows the login page even for valid
             # credentials: ask for new ones only if it persists.
@@ -85,6 +85,14 @@ class FanvilCoordinator(DataUpdateCoordinator[dict[str, str]]):
             raise UpdateFailed(str(err)) from err
         except FanvilError as err:
             raise UpdateFailed(str(err)) from err
+
+    async def async_write_settings(self, values: dict[str, str]) -> None:
+        """Write panel settings and show them at once (no full poll)."""
+        rejected = await self.client.async_write_config(values)
+        if rejected:
+            raise HomeAssistantError(f"The panel rejected {', '.join(rejected)}")
+        self._settings = {**self._settings, **values}
+        self.async_set_updated_data({**self.data, **values})
 
     @callback
     def set_action_url_status(

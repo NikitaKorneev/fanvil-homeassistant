@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2 — 2026-10-30
+
+- *Volume* slider (0–9): sets the talk, ring and tone volume at once (talk volume never below 1).
+- *Camera audio* switch (`ipc.RtspAudioEnable`): microphone sound in both camera streams; plays in
+  the WebRTC live view (G.711).
+
 ## 0.4.1 — 2026-10-30
 
 - Cameras are named *Camera main stream* and *Camera sub stream*, with entity IDs

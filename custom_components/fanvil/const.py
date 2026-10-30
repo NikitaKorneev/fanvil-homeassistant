@@ -23,7 +23,7 @@ AUDIO_MAX_SECONDS = 300
 DEFAULT_POLL_INTERVAL = 30
 # A rebooting panel shows the login page for a while: 3 polls in a row before reauth.
 AUTH_FAILURES_BEFORE_REAUTH = 3
-# SIP account settings change rarely: read them every N polls.
+# Settings (SIP accounts, volume, camera audio) change rarely: read every N polls.
 SIP_CONFIG_EVERY = 10
 # Firmware 2.12.51 sometimes answers a read with an HTML stub; reads are retried.
 READ_ATTEMPTS = 3
@@ -95,3 +95,15 @@ SIP_CONFIG_FIELDS = tuple(
 
 # Camera streams: rtsp .../stream.live0 and stream.live1.
 STREAMS = ("main_stream", "sub_stream")
+
+# Speaker volume (HTTP API Manual 3.3.3): talk 1-9, ring and tones 0-9.
+# Home Assistant shows one volume and writes it to all three.
+VOLUME_TALK = "phone.volume.HandFreeVol"
+VOLUME_RING = "phone.volume.HandFreeRingVol"
+VOLUME_TONE = "phone.volume.HandFreeToneVol"
+VOLUME_FIELDS = (VOLUME_TALK, VOLUME_RING, VOLUME_TONE)
+
+# Microphone sound in the RTSP streams (G.711 u-law, 8 kHz on i60K 2.12.51).
+RTSP_AUDIO = "ipc.RtspAudioEnable"
+
+SETTINGS_FIELDS = (*SIP_CONFIG_FIELDS, *VOLUME_FIELDS, RTSP_AUDIO)

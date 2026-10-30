@@ -131,6 +131,9 @@
     "switch": {
       "relay": {
         "name": "Реле {number} (держать открытым)"
+      },
+      "camera_audio": {
+        "name": "Звук в камере"
       }
     },
     "event": {
@@ -190,6 +193,11 @@
     "media_player": {
       "speaker": {
         "name": "Динамик"
+      }
+    },
+    "number": {
+      "volume": {
+        "name": "Громкость"
       }
     }
   },

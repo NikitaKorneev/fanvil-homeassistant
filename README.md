@@ -13,10 +13,10 @@ without cloud services.
 
 | | |
 |---|---|
-| 📹 **Camera** | Live video (RTSP, H.264): main and sub stream, snapshots |
+| 📹 **Camera** | Live video (RTSP, H.264): main and sub stream, snapshots, optional sound |
 | 🔔 **Doorbell** | The call button as a Home Assistant doorbell event |
 | 🚪 **Door log** | Who opened the door and how (card, PIN, call, exit button, API) and denied attempts |
-| 🔊 **Speaker** | Text-to-speech and audio files on the panel speaker |
+| 🔊 **Speaker** | Text-to-speech and audio files on the panel speaker, volume slider |
 | 🔓 **Door relays** | "Open" pulse button and a "hold open" switch for every relay; relay state updates instantly |
 | 📞 **Calls** | Incoming, outgoing, answered, ended and missed calls as events, with the caller's number |
 | ☎️ **SIP** | Registration status, line number and server for each SIP line |
@@ -91,8 +91,10 @@ The RTSP video uses the same credentials.
 | `event` Call | `incoming`, `outgoing`, `answered`, `ended`, `missed` (attributes: `remote`, `display_remote`, `line`, `duration`) |
 | `event` Panel event | `key`, `input_N_triggered` / `input_N_reset`, `boot`, `tamper`, `motion` |
 | `media_player` Speaker | Plays TTS and audio on the panel (`tts.speak`, `media_player.play_media`) |
+| `number` Volume | 0–9, sets talk, ring and tone volume at once (talk volume never below 1); the three panel values as attributes |
 | `button` Open relay N (pulse) | Opens the relay for the time set on the panel |
 | `switch` Relay N (hold open) | On while held open by this switch; a pulse, card or call does not turn it on |
+| `switch` Camera audio | Configuration: microphone sound in both camera streams |
 | `button` Restart | Reboots the panel (configuration) |
 | `sensor` Last door opening | Diagnostics: time of the last door log entry; method, user and result as attributes |
 | `sensor` Line N call state | Diagnostics: raw call state of each line (the *Call* event is the main entity) |
@@ -173,6 +175,12 @@ every clip (TTS, media, an URL) is converted with ffmpeg to 16 kHz mono WAV and 
 random one-time address for 5 minutes. The panel must be able to reach the Home Assistant address
 shown by the *Action URL* sensor (or set in the options).
 
+### Camera sound
+
+*Camera audio* turns on the microphone in both RTSP streams. The panel sends G.711 (8 kHz): the
+live view plays it over WebRTC (go2rtc, part of the default configuration). Home Assistant's HLS
+fallback keeps only AAC and MP3, so it plays the video without sound.
+
 ## Known firmware behaviour
 
 Handled by the integration, listed here for troubleshooting (i60K, firmware 2.12.51):
@@ -198,7 +206,7 @@ Handled by the integration, listed here for troubleshooting (i60K, firmware 2.12
   only sends an HTTP request to Home Assistant (no SIP call) — a pure smart doorbell.
 - **Guest codes:** temporary PINs and cards with time periods (`api/persons`, `api/period`).
 - **Call control:** dial a number and hang up from Home Assistant.
-- **Volume and audio:** speaker and microphone volume, RTSP audio, speaker/microphone self-test.
+- **Self-test:** a button for the built-in speaker and microphone test.
 - **Server-side access decisions** (firmware 2.12.55+): Home Assistant decides whether a card or
   PIN opens the door.
 - More devices: i61–i68, indoor stations, intercoms.
