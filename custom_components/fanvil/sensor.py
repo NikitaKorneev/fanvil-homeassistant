@@ -6,7 +6,8 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import EntityCategory, UnitOfTime
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import FanvilConfigEntry
@@ -14,6 +15,7 @@ from .action_url import STATUS_FOREIGN, STATUS_OURS, STATUS_REJECTED, summary
 from .const import (
     FIRMWARE,
     IP_ADDRESS,
+    SIGNAL_DOOR_LOG,
     UPTIME,
     call_key,
     registration_key,
@@ -51,6 +53,8 @@ async def async_setup_entry(
         if key in coordinator.data:
             entities.append(FanvilSensor(coordinator, key, "call_state", line))
     entities.append(FanvilActionUrlSensor(coordinator))
+    if coordinator.door_log is not None:
+        entities.append(FanvilLastOpeningSensor(coordinator))
     async_add_entities(entities)
 
 
@@ -133,3 +137,42 @@ class FanvilActionUrlSensor(FanvilEntity, SensorEntity):
             "used_by_other_system": groups.get(STATUS_FOREIGN, []),
             "not_supported": groups.get(STATUS_REJECTED, []),
         }
+
+
+class FanvilLastOpeningSensor(FanvilEntity, SensorEntity):
+    """Time of the last door log entry; method, user and result as attributes."""
+
+    _attr_translation_key = "last_opening"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator: FanvilCoordinator) -> None:
+        super().__init__(coordinator, "last_opening")
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass,
+                SIGNAL_DOOR_LOG.format(self.coordinator.config_entry.entry_id),
+                self._async_entry,
+            )
+        )
+
+    @callback
+    def _async_entry(self, _entry: dict) -> None:
+        self.async_write_ha_state()
+
+    @property
+    def _entry(self) -> dict | None:
+        door_log = self.coordinator.door_log
+        return door_log.last_entry if door_log else None
+
+    @property
+    def native_value(self):
+        return (self._entry or {}).get("time")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object] | None:
+        if not (entry := self._entry):
+            return None
+        return {k: v for k, v in entry.items() if k not in ("time", "id")}

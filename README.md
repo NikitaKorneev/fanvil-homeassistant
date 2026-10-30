@@ -13,7 +13,10 @@ without cloud services.
 
 | | |
 |---|---|
-| 📹 **Camera** | Live video (RTSP, H.264) and snapshots |
+| 📹 **Camera** | Live video (RTSP, H.264): main and sub stream, snapshots |
+| 🔔 **Doorbell** | The call button as a Home Assistant doorbell event |
+| 🚪 **Door log** | Who opened the door and how (card, PIN, call, exit button, API) and denied attempts |
+| 🔊 **Speaker** | Text-to-speech and audio files on the panel speaker |
 | 🔓 **Door relays** | "Open" pulse button and a "hold open" switch for every relay; state updates instantly |
 | 📞 **Calls** | Incoming, outgoing, answered, ended and missed calls as events, with the caller's number |
 | ☎️ **SIP** | Registration status, line number and server for each SIP line |
@@ -31,8 +34,8 @@ without cloud services.
 
 | Series | Models | Status |
 |---|---|---|
-| Door phones | **i60, i60K** | ✅ Supported (tested: i60K, firmware 2.12.51) |
-| Door phones | i61, i62, i63, i64, i66, i67, i68 | 🧪 Should work (basic functions), not tested yet |
+| Door phones | **i60, i60K, i62** | ✅ Supported (tested: i60K and i62, firmware 2.12.51) |
+| Door phones | i61, i63, i64, i66, i67, i68, i62-2 Wire, i64-2 Wire | 🧪 Should work (basic functions), not tested yet |
 | Indoor stations | i501, i504, i506, i51W, i52W, i53W, H501 and others | 🔜 Planned |
 | Intercoms | i10S, i16S, A10 series | 🔜 Planned |
 
@@ -80,7 +83,12 @@ The RTSP video uses the same credentials.
 
 | Entity | Description |
 |---|---|
-| `camera` | Panel camera: RTSP main stream, snapshot via API |
+| `camera` | Panel camera: RTSP main stream (e.g. 1280×720), snapshot via API |
+| `camera` Sub stream | Lower resolution stream (e.g. 640×480, ~0.5 Mbit/s) for dashboards and mobile |
+| `event` Doorbell | `ring` when the call button is pressed (device class *doorbell*) |
+| `event` Door | `opened` / `denied` from the door log (attributes: `method`, `user`, `relay`, `card`, `sip_number`, `reason`) |
+| `sensor` Last door opening | Time of the last door log entry; method, user and result as attributes |
+| `media_player` Speaker | Plays TTS and audio on the panel (`tts.speak`, `media_player.play_media`) |
 | `button` Open relay N (pulse) | Opens the relay for the time set on the panel |
 | `switch` Relay N (hold open) | Keeps the relay open until switched off |
 | `binary_sensor` Relay N active, Input N open | Relay and input states |
@@ -94,15 +102,26 @@ The RTSP video uses the same credentials.
 
 Every event is also fired on the event bus as `fanvil_event` with `device_id`, `event` and the call details.
 
-### Automation example
+### Automation examples
+
+Say something at the door:
+
+```yaml
+action: tts.speak
+target:
+  entity_id: tts.home_assistant_cloud
+data:
+  media_player_entity_id: media_player.fanvil_i60k_speaker
+  message: "Please leave the parcel at the door"
+```
+
+Doorbell notification:
 
 ```yaml
 alias: Doorbell — notify with a snapshot
 triggers:
   - trigger: state
-    entity_id: event.fanvil_i60k_call
-    attribute: event_type
-    to: incoming
+    entity_id: event.fanvil_i60k_doorbell
 actions:
   - action: camera.snapshot
     target:
@@ -111,7 +130,7 @@ actions:
       filename: /config/www/doorbell.jpg
   - action: notify.mobile_app_phone
     data:
-      message: "Call from {{ state_attr('event.fanvil_i60k_call', 'remote') }}"
+      message: "Someone is at the door"
       data:
         image: /local/doorbell.jpg
 ```
@@ -129,8 +148,26 @@ With Action URL enabled, the integration writes URLs like
 - The URLs are checked again every 10 minutes (provisioning or a factory reset may wipe them).
 - The webhook accepts requests only from the local network and only from the panel's MAC address.
 
-The door-open log (`doorphone.RelayLog*`) is not touched: it is often used by Fanvil's cloud
-management.
+### Doorbell
+
+A press of the call button reaches Home Assistant as the `key` Action URL event and, when the
+button dials a number, as an `outgoing` call. The *Doorbell* entity turns both into one `ring`
+(repeats within 15 s are ignored), so the button keeps calling the apartment and Home Assistant
+gets a doorbell at the same time.
+
+### Door log
+
+The panel keeps a log of every opening and failed attempt. The integration reads it right after a
+relay opens and once a minute (to catch denied attempts), and never changes it. PIN codes are never
+passed on. Uploading the log to a server (`doorphone.RelayLog*`) is not touched: it is often used by
+Fanvil's cloud management.
+
+### Speaker
+
+The panel downloads audio from Home Assistant by itself. Firmware 2.12.51 accepts WAV only, so
+every clip (TTS, media, an URL) is converted with ffmpeg to 16 kHz mono WAV and served under a
+random one-time address for 5 minutes. The panel must be able to reach the Home Assistant address
+shown by the *Action URL* sensor (or set in the options).
 
 ## Known firmware behaviour
 
@@ -150,6 +187,17 @@ Handled by the integration, listed here for troubleshooting (i60K, firmware 2.12
 - **No instant events:** check the *Action URL* sensor and its attributes; make sure the panel can
   reach the Home Assistant address shown there, or set it in the options.
 - **Diagnostics:** device page → ⋮ → *Download diagnostics* (passwords, MAC and serial number are redacted).
+
+## Roadmap
+
+- **Call button for Home Assistant only:** an option to switch the panel's function key so a press
+  only sends an HTTP request to Home Assistant (no SIP call) — a pure smart doorbell.
+- **Guest codes:** temporary PINs and cards with time periods (`api/persons`, `api/period`).
+- **Call control:** dial a number and hang up from Home Assistant.
+- **Volume and audio:** speaker and microphone volume, RTSP audio, speaker/microphone self-test.
+- **Server-side access decisions** (firmware 2.12.55+): Home Assistant decides whether a card or
+  PIN opens the door.
+- More devices: i61–i68, indoor stations, intercoms.
 
 ## Development
 

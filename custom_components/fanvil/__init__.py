@@ -22,8 +22,8 @@ from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_interval
 
-from . import action_url
-from .api import FanvilClient, FanvilError, device_unique_id
+from . import action_url, audio
+from .api import FanvilApiError, FanvilClient, FanvilError, device_unique_id
 from .const import (
     ACTION_URL_RESYNC,
     CONF_ACTION_URL,
@@ -32,6 +32,7 @@ from .const import (
     CONF_WEBHOOK_ID,
     DEFAULT_ACTION_URL,
     DOMAIN,
+    DOOR_LOG_INTERVAL,
 )
 from .coordinator import FanvilCoordinator
 
@@ -44,6 +45,7 @@ PLATFORMS = (
     Platform.SWITCH,
     Platform.CAMERA,
     Platform.EVENT,
+    Platform.MEDIA_PLAYER,
 )
 type FanvilConfigEntry = ConfigEntry[FanvilCoordinator]
 
@@ -95,6 +97,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: FanvilConfigEntry) -> bo
     if device_unique_id(coordinator.data) != entry.unique_id:
         raise ConfigEntryError("A different panel is using the configured address")
     entry.runtime_data = coordinator
+    await _async_detect_door_log(coordinator)
+    audio.async_setup(hass)
 
     if not entry.data.get(CONF_WEBHOOK_ID):
         hass.config_entries.async_update_entry(
@@ -143,6 +147,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: FanvilConfigEntry) -> bo
             )
 
     await _async_sync()
+    if (door_log := coordinator.door_log) is not None:
+        # Locating the end of a long log takes a few requests: in the background.
+        entry.async_create_background_task(
+            hass, door_log.async_check(), "fanvil door log"
+        )
+
+        async def _async_check_door_log(_now=None) -> None:
+            await door_log.async_check()
+
+        entry.async_on_unload(
+            async_track_time_interval(
+                hass, _async_check_door_log, timedelta(seconds=DOOR_LOG_INTERVAL)
+            )
+        )
     if action_url_enabled(entry):
         # Provisioning or a factory reset may wipe the keys: check them again.
         entry.async_on_unload(
@@ -151,6 +169,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: FanvilConfigEntry) -> bo
             )
         )
     return True
+
+
+async def _async_detect_door_log(coordinator: FanvilCoordinator) -> None:
+    """Door phones keep a door log; other devices answer with an error."""
+    try:
+        await coordinator.client.async_read_door_log(1, 1)
+    except FanvilApiError:
+        return
+    except FanvilError as err:
+        # Unknown yet (busy panel): keep the entities, reads will be retried.
+        _LOGGER.debug("Door log check failed: %s", err)
+    coordinator.enable_door_log()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: FanvilConfigEntry) -> bool:

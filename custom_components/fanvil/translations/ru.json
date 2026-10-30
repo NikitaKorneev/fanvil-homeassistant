@@ -56,6 +56,11 @@
     }
   },
   "entity": {
+    "camera": {
+      "sub_stream": {
+        "name": "Дополнительный поток"
+      }
+    },
     "sensor": {
       "ip_address": {
         "name": "IP-адрес"
@@ -96,6 +101,9 @@
             "name": "Не поддерживаются"
           }
         }
+      },
+      "last_opening": {
+        "name": "Последнее открытие двери"
       }
     },
     "binary_sensor": {
@@ -153,6 +161,32 @@
             }
           }
         }
+      },
+      "doorbell": {
+        "name": "Звонок в дверь",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "ring": "Звонок"
+            }
+          }
+        }
+      },
+      "door": {
+        "name": "Дверь",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "opened": "Открыта",
+              "denied": "Доступ запрещён"
+            }
+          }
+        }
+      }
+    },
+    "media_player": {
+      "speaker": {
+        "name": "Динамик"
       }
     }
   },

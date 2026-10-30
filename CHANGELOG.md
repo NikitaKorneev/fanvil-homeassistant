@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — 2026-10-30
+
+- Camera sub stream (`stream.live1`) as a second camera entity.
+- Doorbell event entity: the call button press (`key`) and the outgoing call it starts become one `ring`.
+- Door log (`api/device_log`): `event` *Door* (`opened` / `denied` with method, user, relay, card,
+  reason) and the *Last door opening* sensor. PIN codes are never exposed.
+- Speaker `media_player`: TTS and audio on the panel (`api/audio_file`). Audio is converted to
+  16 kHz mono WAV with ffmpeg, since firmware 2.12.51 ignores MP3 URLs.
+- Fanvil i62 (two relays) tested.
+- Requires the `ffmpeg` and `media_source` integrations (part of the default configuration).
+
 ## 0.3.0 — 2026-10-29
 
 First public release.

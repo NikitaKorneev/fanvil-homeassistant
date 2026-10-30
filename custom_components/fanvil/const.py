@@ -11,6 +11,15 @@ DEFAULT_ACTION_URL = True
 ACTION_URL_RESYNC = 600
 EVENT_FANVIL = "fanvil_event"
 SIGNAL_EVENT = "fanvil_event_{}"
+SIGNAL_DOOR_LOG = "fanvil_door_log_{}"
+# Door log: read after a relay opened, and check for failed attempts every minute.
+DOOR_LOG_AFTER_RELAY = 2
+DOOR_LOG_INTERVAL = 60
+# Doorbell: the call button press arrives as "key" and as an outgoing call.
+DOORBELL_DEBOUNCE = 15
+# Speaker: audio converted for the panel is downloadable for 5 minutes.
+AUDIO_TTL = 300
+AUDIO_MAX_SECONDS = 300
 DEFAULT_POLL_INTERVAL = 30
 # A rebooting panel shows the login page for a while: 3 polls in a row before reauth.
 AUTH_FAILURES_BEFORE_REAUTH = 3
@@ -61,7 +70,7 @@ def input_key(port: int) -> str:
 
 # Models verified on real hardware (info.dev.Model, lower case). Any Fanvil
 # device with the HTTP API is accepted; the others get an informational log line.
-TESTED_MODELS = frozenset({"i60", "i60k"})
+TESTED_MODELS = frozenset({"i60", "i60k", "i62"})
 
 # A returned key is
 # not enough to prove a physical port exists; verify the profile on real hardware.

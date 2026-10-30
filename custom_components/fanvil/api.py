@@ -372,3 +372,55 @@ class FanvilClient:
     async def async_reboot(self) -> None:
         """Reboot only when explicitly requested by an entity action."""
         await self._request("api/device", {"type": {"cmd": "reboot"}})
+
+    async def async_read_door_log(self, first: int, last: int) -> list[dict[str, Any]]:
+        """Door opening log entries by position (1 is the oldest).
+
+        Positions past the end return an empty list. Pictures are dropped:
+        they may be large and are not used.
+        """
+        if first < 1 or last < first:
+            raise ValueError("Invalid log range")
+        index = str(first) if first == last else f"{first}-{last}"
+        result = await self._read_request(
+            "api/device_log",
+            {
+                "type": {"cmd": "get", "condition": "index"},
+                "deviceLog": {"index": index},
+            },
+        )
+        rows = result.get("data") or []
+        if not isinstance(rows, list):
+            raise FanvilProtocolError("The door log is not a list")
+        return [
+            {
+                key: value
+                for key, value in row.items()
+                if key not in ("pictureData", "snapshotData", "faceData")
+            }
+            for row in rows
+            if isinstance(row, dict)
+        ]
+
+    async def async_play_audio(self, url: str, times: int = 1) -> None:
+        """Download a WAV file from url and play it on the panel speaker.
+
+        times: 1..N, 0 - loop until stopped. Firmware 2.12.51 fetches WAV but
+        ignores MP3 URLs.
+        """
+        if times < 0:
+            raise ValueError("Invalid play count")
+        await self._request(
+            "api/audio_file",
+            {
+                "type": {"cmd": "play"},
+                "audioPlay": {"path": "url", "name": url, "times": str(times)},
+            },
+        )
+
+    async def async_stop_audio(self) -> None:
+        """Stop a file started by async_play_audio."""
+        await self._request(
+            "api/audio_file",
+            {"type": {"cmd": "stop"}, "audioPlay": {"path": "url"}},
+        )

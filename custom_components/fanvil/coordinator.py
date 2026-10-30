@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .action_url import valid_ipv4
@@ -18,11 +19,14 @@ from .const import (
     CONF_POLL_INTERVAL,
     DEFAULT_POLL_INTERVAL,
     DOMAIN,
+    DOOR_LOG_AFTER_RELAY,
     EVENT_FANVIL,
+    SIGNAL_DOOR_LOG,
     SIGNAL_EVENT,
     SIP_CONFIG_EVERY,
     relay_key,
 )
+from .door_log import DoorLogTracker
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,6 +45,8 @@ class FanvilCoordinator(DataUpdateCoordinator[dict[str, str]]):
         self.action_url_status: dict[str, str] | None = None
         self.action_url_base: str | None = None
         self.last_event: dict[str, str] | None = None
+        # None: the panel has no door log API (checked at setup).
+        self.door_log: DoorLogTracker | None = None
         super().__init__(
             hass,
             _LOGGER,
@@ -109,8 +115,46 @@ class FanvilCoordinator(DataUpdateCoordinator[dict[str, str]]):
             relay = int(event.split("_")[1])
             state = "open" if event.endswith("_open") else "close"
             self.async_set_updated_data({**self.data, relay_key(relay): state})
+            if state == "open" and self.door_log:
+                # The panel writes the log entry right after opening.
+                async_call_later(
+                    self.hass, DOOR_LOG_AFTER_RELAY, self._async_door_log_later
+                )
             return
         self.hass.async_create_task(self.async_request_refresh())
+
+    async def _async_door_log_later(self, _now) -> None:
+        if self.door_log:
+            await self.door_log.async_check()
+
+    def enable_door_log(self) -> None:
+        self.door_log = DoorLogTracker(self.client, self._async_door_log_entry)
+
+    @callback
+    def _async_door_log_entry(self, entry: dict | None) -> None:
+        """A new door log entry: bus event, event entity, sensor.
+
+        None: the newest existing entry was located (sensor only).
+        """
+        signal = SIGNAL_DOOR_LOG.format(self.config_entry.entry_id)
+        if entry is None:
+            async_dispatcher_send(self.hass, signal, None)
+            return
+        device = dr.async_get(self.hass).async_get_device(
+            identifiers={(DOMAIN, self.config_entry.unique_id)}
+        )
+        data = {k: v for k, v in entry.items() if k != "time"}
+        if entry.get("time"):
+            data["time"] = entry["time"].isoformat()
+        self.hass.bus.async_fire(
+            EVENT_FANVIL,
+            {
+                "device_id": device.id if device else None,
+                "event": f"door_{entry['result']}",
+                **data,
+            },
+        )
+        async_dispatcher_send(self.hass, signal, entry)
 
     @callback
     def _async_follow_ip(self, new_ip: str) -> bool:

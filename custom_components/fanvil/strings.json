@@ -56,6 +56,11 @@
     }
   },
   "entity": {
+    "camera": {
+      "sub_stream": {
+        "name": "Sub stream"
+      }
+    },
     "sensor": {
       "ip_address": {
         "name": "IP address"
@@ -96,6 +101,9 @@
             "name": "Not supported"
           }
         }
+      },
+      "last_opening": {
+        "name": "Last door opening"
       }
     },
     "binary_sensor": {
@@ -153,6 +161,32 @@
             }
           }
         }
+      },
+      "doorbell": {
+        "name": "Doorbell",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "ring": "Ring"
+            }
+          }
+        }
+      },
+      "door": {
+        "name": "Door",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "opened": "Opened",
+              "denied": "Access denied"
+            }
+          }
+        }
+      }
+    },
+    "media_player": {
+      "speaker": {
+        "name": "Speaker"
       }
     }
   },
