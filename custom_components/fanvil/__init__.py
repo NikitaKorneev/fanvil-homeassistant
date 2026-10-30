@@ -17,10 +17,13 @@ from homeassistant.const import (
     CONF_USERNAME,
     Platform,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryError
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.util import slugify
 
 from . import action_url, audio
 from .api import FanvilApiError, FanvilClient, FanvilError, device_unique_id
@@ -90,6 +93,30 @@ async def async_base_url(hass: HomeAssistant, entry: ConfigEntry) -> str:
     return f"{scheme}://{source_ip}:{port}"
 
 
+@callback
+def _async_rename_main_camera(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """0.4 named the main camera after the device: camera.fanvil_i62.
+
+    Give it the new camera.fanvil_i62_main_stream next to the sub stream, but
+    only if the user has not chosen an entity ID of their own.
+    """
+    registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id(
+        Platform.CAMERA, DOMAIN, f"{entry.unique_id}_camera"
+    )
+    if not entity_id or not (camera := registry.async_get(entity_id)):
+        return
+    device = dr.async_get(hass).async_get(camera.device_id or "")
+    names = {device.name, device.name_by_user} if device else set()
+    if entity_id not in {f"camera.{slugify(name)}" for name in names if name}:
+        return
+    new_entity_id = f"{entity_id}_main_stream"
+    if registry.async_is_registered(new_entity_id):
+        return
+    _LOGGER.info("Fanvil: %s renamed to %s", entity_id, new_entity_id)
+    registry.async_update_entity(entity_id, new_entity_id=new_entity_id)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: FanvilConfigEntry) -> bool:
     """Set up a panel from its config entry."""
     coordinator = FanvilCoordinator(hass, entry, _client(hass, entry))
@@ -97,6 +124,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: FanvilConfigEntry) -> bo
     if device_unique_id(coordinator.data) != entry.unique_id:
         raise ConfigEntryError("A different panel is using the configured address")
     entry.runtime_data = coordinator
+    _async_rename_main_camera(hass, entry)
     await _async_detect_door_log(coordinator)
     audio.async_setup(hass)
 

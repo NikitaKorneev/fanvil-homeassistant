@@ -17,7 +17,7 @@ without cloud services.
 | 🔔 **Doorbell** | The call button as a Home Assistant doorbell event |
 | 🚪 **Door log** | Who opened the door and how (card, PIN, call, exit button, API) and denied attempts |
 | 🔊 **Speaker** | Text-to-speech and audio files on the panel speaker |
-| 🔓 **Door relays** | "Open" pulse button and a "hold open" switch for every relay; state updates instantly |
+| 🔓 **Door relays** | "Open" pulse button and a "hold open" switch for every relay; relay state updates instantly |
 | 📞 **Calls** | Incoming, outgoing, answered, ended and missed calls as events, with the caller's number |
 | ☎️ **SIP** | Registration status, line number and server for each SIP line |
 | 🚪 **Inputs & panel events** | Door sensors / exit buttons, call button, tamper, motion, boot |
@@ -83,22 +83,26 @@ The RTSP video uses the same credentials.
 
 | Entity | Description |
 |---|---|
-| `camera` | Panel camera: RTSP main stream (e.g. 1280×720), snapshot via API |
-| `camera` Sub stream | Lower resolution stream (e.g. 640×480, ~0.5 Mbit/s) for dashboards and mobile |
+| `camera` Camera main stream | `camera.<device>_main_stream`: RTSP main stream (e.g. 1280×720), snapshot via API |
+| `camera` Camera sub stream | `camera.<device>_sub_stream`: lower resolution (e.g. 640×480, ~0.5 Mbit/s) for dashboards and mobile |
+| `binary_sensor` Relay N active, Input N open | Real relay and input states |
 | `event` Doorbell | `ring` when the call button is pressed (device class *doorbell*) |
 | `event` Door | `opened` / `denied` from the door log (attributes: `method`, `user`, `relay`, `card`, `sip_number`, `reason`) |
-| `sensor` Last door opening | Time of the last door log entry; method, user and result as attributes |
-| `media_player` Speaker | Plays TTS and audio on the panel (`tts.speak`, `media_player.play_media`) |
-| `button` Open relay N (pulse) | Opens the relay for the time set on the panel |
-| `switch` Relay N (hold open) | Keeps the relay open until switched off |
-| `binary_sensor` Relay N active, Input N open | Relay and input states |
 | `event` Call | `incoming`, `outgoing`, `answered`, `ended`, `missed` (attributes: `remote`, `display_remote`, `line`, `duration`) |
 | `event` Panel event | `key`, `input_N_triggered` / `input_N_reset`, `boot`, `tamper`, `motion` |
-| `sensor` SIP N number, SIP N registration code, Line N call state | SIP and call information |
-| `binary_sensor` SIP N registered | Registration status |
-| `button` Restart | Reboots the panel |
-| `sensor` Action URL | `on` / `partial` (some events are used by another system) / `off` |
+| `media_player` Speaker | Plays TTS and audio on the panel (`tts.speak`, `media_player.play_media`) |
+| `button` Open relay N (pulse) | Opens the relay for the time set on the panel |
+| `switch` Relay N (hold open) | On while held open by this switch; a pulse, card or call does not turn it on |
+| `button` Restart | Reboots the panel (configuration) |
+| `sensor` Last door opening | Diagnostics: time of the last door log entry; method, user and result as attributes |
+| `sensor` Line N call state | Diagnostics: raw call state of each line (the *Call* event is the main entity) |
+| `sensor` SIP N number, SIP N registration code; `binary_sensor` SIP N registered | Diagnostics: SIP |
+| `sensor` Action URL | Diagnostics: `on` / `partial` (some events are used by another system) / `off` |
 | `sensor` Firmware, IP address, Uptime | Diagnostics |
+
+The camera names start with *Camera*, so on the device page both streams stay together at the top of
+the list. Updating from 0.4.0 renames `camera.<device>` to `camera.<device>_main_stream` (unless you
+have changed the entity ID yourself); update dashboards and automations that use the old ID.
 
 Every event is also fired on the event bus as `fanvil_event` with `device_id`, `event` and the call details.
 
@@ -125,7 +129,7 @@ triggers:
 actions:
   - action: camera.snapshot
     target:
-      entity_id: camera.fanvil_i60k
+      entity_id: camera.fanvil_i60k_main_stream
     data:
       filename: /config/www/doorbell.jpg
   - action: notify.mobile_app_phone

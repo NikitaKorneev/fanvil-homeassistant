@@ -57,8 +57,11 @@
   },
   "entity": {
     "camera": {
+      "main_stream": {
+        "name": "Camera main stream"
+      },
       "sub_stream": {
-        "name": "Sub stream"
+        "name": "Camera sub stream"
       }
     },
     "sensor": {

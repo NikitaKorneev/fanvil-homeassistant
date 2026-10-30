@@ -92,3 +92,6 @@ SIP_CONFIG_FIELDS = tuple(
     for line in (1, 2)
     for name in ("PhoneNumber", "DisplayName", "RegAddr", "RegEnabled")
 )
+
+# Camera streams: rtsp .../stream.live0 and stream.live1.
+STREAMS = ("main_stream", "sub_stream")

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1 — 2026-10-30
+
+- Cameras are named *Camera main stream* and *Camera sub stream*, with entity IDs
+  `camera.<device>_main_stream` and `camera.<device>_sub_stream`; they stay together at the top of the
+  device page. The 0.4.0 main camera `camera.<device>` is renamed automatically unless its entity ID
+  was changed by the user.
+- The *Hold open* switch shows only the hold it set: a pulse, a card or a call no longer turns it on.
+  The *Relay N active* binary sensor still shows the real relay state.
+- *Last door opening* and *Line N call state* moved to diagnostics.
+
 ## 0.4.0 — 2026-10-30
 
 - Camera sub stream (`stream.live1`) as a second camera entity.

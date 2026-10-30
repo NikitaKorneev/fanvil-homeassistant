@@ -72,8 +72,8 @@ class FanvilSensor(FanvilEntity, SensorEntity):
         self._attr_translation_key = kind
         if line is not None:
             self._attr_translation_placeholders = {"line": str(line)}
-        if kind != "call_state":
-            self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        # Calls are followed by the Call event; these are for troubleshooting.
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
         if kind == "uptime":
             self._attr_device_class = SensorDeviceClass.DURATION
             self._attr_native_unit_of_measurement = UnitOfTime.SECONDS
@@ -144,6 +144,8 @@ class FanvilLastOpeningSensor(FanvilEntity, SensorEntity):
 
     _attr_translation_key = "last_opening"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
+    # The Door event is the main entity for openings.
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator: FanvilCoordinator) -> None:
         super().__init__(coordinator, "last_opening")

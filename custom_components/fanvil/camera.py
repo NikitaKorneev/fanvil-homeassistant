@@ -6,6 +6,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import FanvilConfigEntry
 from .api import FanvilError
+from .const import STREAMS
 from .coordinator import FanvilCoordinator
 from .entity import FanvilEntity
 
@@ -34,10 +35,14 @@ class FanvilCamera(FanvilEntity, Camera):
         super().__init__(coordinator, "camera" if stream == 0 else "camera_sub")
         Camera.__init__(self)
         self._stream = stream
-        if stream == 0:
-            self._attr_name = None
-        else:
-            self._attr_translation_key = "sub_stream"
+        # "Camera main/sub stream": the device page sorts entities by name,
+        # so both streams stay together at the top of the list.
+        self._attr_translation_key = STREAMS[stream]
+
+    @property
+    def suggested_object_id(self) -> str:
+        """camera.<device>_main_stream and camera.<device>_sub_stream."""
+        return STREAMS[self._stream]
 
     async def stream_source(self) -> str:
         return self.coordinator.client.rtsp_url(self._stream)
