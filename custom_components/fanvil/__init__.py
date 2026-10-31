@@ -18,7 +18,7 @@ from homeassistant.const import (
     Platform,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryError
+from homeassistant.exceptions import ConfigEntryError, HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -31,11 +31,19 @@ from .const import (
     ACTION_URL_RESYNC,
     CONF_ACTION_URL,
     CONF_AUTH_TYPE,
+    CONF_CAMERA_AUDIO,
     CONF_HA_URL,
     CONF_WEBHOOK_ID,
     DEFAULT_ACTION_URL,
+    DEFAULT_CAMERA_AUDIO,
     DOMAIN,
     DOOR_LOG_INTERVAL,
+    FIRMWARE,
+    IP_ADDRESS,
+    RTSP_AUDIO,
+    call_key,
+    registration_key,
+    sip_number_key,
 )
 from .coordinator import FanvilCoordinator
 
@@ -118,6 +126,62 @@ def _async_rename_main_camera(hass: HomeAssistant, entry: ConfigEntry) -> None:
     registry.async_update_entity(entity_id, new_entity_id=new_entity_id)
 
 
+@callback
+def _async_remove_camera_audio_switch(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """0.4.2 had a camera audio switch; it is an option now."""
+    registry = er.async_get(hass)
+    if entity_id := registry.async_get_entity_id(
+        Platform.SWITCH, DOMAIN, f"{entry.unique_id}_camera_audio"
+    ):
+        registry.async_remove(entity_id)
+
+
+async def _async_apply_camera_audio(coordinator: FanvilCoordinator) -> None:
+    """Sound in the RTSP streams as set in the options (on by default)."""
+    entry = coordinator.config_entry
+    wanted = "1" if entry.options.get(CONF_CAMERA_AUDIO, DEFAULT_CAMERA_AUDIO) else "0"
+    current = coordinator.data.get(RTSP_AUDIO)
+    if current not in ("0", "1") or current == wanted:
+        return
+    try:
+        await coordinator.async_write_settings({RTSP_AUDIO: wanted})
+    except (FanvilError, HomeAssistantError) as err:
+        _LOGGER.warning("Fanvil %s: camera sound not set: %s", entry.title, err)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """1.1 -> 1.2: disable the entities that 0.5.0 creates disabled.
+
+    Home Assistant keeps the settings of known entities, so without this an
+    update would keep showing the diagnostic sensors and the raw panel events.
+    """
+    if entry.version > 1:
+        return False
+    if entry.minor_version < 2:
+        keys = {
+            IP_ADDRESS,
+            FIRMWARE,
+            "action_url",
+            "last_opening",
+            "event_panel",
+            *(registration_key(line) for line in (1, 2)),
+            *(sip_number_key(line) for line in (1, 2)),
+            *(call_key(line) for line in (0, 1, 2)),
+        }
+        registry = er.async_get(hass)
+        for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
+            if (
+                entity.domain in (Platform.SENSOR, Platform.EVENT)
+                and entity.disabled_by is None
+                and entity.unique_id.removeprefix(f"{entry.unique_id}_") in keys
+            ):
+                registry.async_update_entity(
+                    entity.entity_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION
+                )
+        hass.config_entries.async_update_entry(entry, minor_version=2)
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: FanvilConfigEntry) -> bool:
     """Set up a panel from its config entry."""
     coordinator = FanvilCoordinator(hass, entry, _client(hass, entry))
@@ -126,6 +190,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: FanvilConfigEntry) -> bo
         raise ConfigEntryError("A different panel is using the configured address")
     entry.runtime_data = coordinator
     _async_rename_main_camera(hass, entry)
+    _async_remove_camera_audio_switch(hass, entry)
+    await _async_apply_camera_audio(coordinator)
     await _async_detect_door_log(coordinator)
     audio.async_setup(hass)
 

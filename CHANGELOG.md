@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-10-31
+
+- *Motion*, *Noise* and *Tamper* binary sensors from the panel's Action URL (noise:
+  `cti.vimCti.NoiseAlarmUrl`); they turn off 30 s after the last report.
+- Relays and inputs are discovered up to 4 (the i62 has a third input); Action URL for input 3.
+- Camera sound is an option (*Configure*), on by default; the *Camera audio* switch is removed.
+- Fewer entities by default: only uptime and SIP registration stay in diagnostics; firmware, IP
+  address, SIP numbers and codes, line call states, Action URL, last door opening and the raw
+  *Panel event* are disabled by default. Updating from 0.4.x disables them once (config entry 1.2).
+
 ## 0.4.2 — 2026-10-30
 
 - *Volume* slider (0–9): sets the talk, ring and tone volume at once (talk volume never below 1).

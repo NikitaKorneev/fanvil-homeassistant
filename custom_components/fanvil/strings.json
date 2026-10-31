@@ -118,6 +118,15 @@
       },
       "input_open": {
         "name": "Input {number} open"
+      },
+      "motion": {
+        "name": "Motion"
+      },
+      "noise": {
+        "name": "Noise"
+      },
+      "tamper": {
+        "name": "Tamper"
       }
     },
     "button": {
@@ -131,9 +140,6 @@
     "switch": {
       "relay": {
         "name": "Relay {number} (hold open)"
-      },
-      "camera_audio": {
-        "name": "Camera audio"
       }
     },
     "event": {
@@ -161,9 +167,12 @@
               "input_1_reset": "Input 1 reset",
               "input_2_triggered": "Input 2 triggered",
               "input_2_reset": "Input 2 reset",
+              "input_3_triggered": "Input 3 triggered",
+              "input_3_reset": "Input 3 reset",
               "boot": "Booted",
               "tamper": "Tamper",
-              "motion": "Motion"
+              "motion": "Motion",
+              "noise": "Noise"
             }
           }
         }
@@ -208,11 +217,13 @@
         "description": "Action URL: the panel reports events (calls, relay, inputs, SIP, address change) to Home Assistant at once. Turn it off if the panel's Action URLs are used by another system: the integration never overwrites URLs set by others and removes only its own.",
         "data": {
           "action_url": "Configure Action URL on the panel",
+          "camera_audio": "Sound in the camera streams (microphone)",
           "ha_url": "Home Assistant address for the panel (empty - automatic)",
           "poll_interval": "Polling interval (seconds)"
         },
         "data_description": {
-          "ha_url": "For example http://192.168.1.10:8123. Automatic: the IP Home Assistant uses to reach the panel."
+          "ha_url": "For example http://192.168.1.10:8123. Automatic: the IP Home Assistant uses to reach the panel.",
+          "camera_audio": "Turns on the panel microphone in both RTSP streams. Note that a recorder (NVR) connected to the panel will record it too."
         }
       }
     },

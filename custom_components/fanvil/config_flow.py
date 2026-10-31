@@ -39,9 +39,11 @@ from .api import (
 from .const import (
     CONF_ACTION_URL,
     CONF_AUTH_TYPE,
+    CONF_CAMERA_AUDIO,
     CONF_HA_URL,
     CONF_POLL_INTERVAL,
     DEFAULT_ACTION_URL,
+    DEFAULT_CAMERA_AUDIO,
     DEFAULT_POLL_INTERVAL,
     DOMAIN,
     MODEL,
@@ -73,6 +75,8 @@ class FanvilConfigFlow(ConfigFlow, domain=DOMAIN):
     """Verify access and identity before creating or updating an entry."""
 
     VERSION = 1
+    # 1.2 (0.5.0): diagnostic entities are disabled by default.
+    MINOR_VERSION = 2
 
     async def _async_form(
         self, step_id: str, user_input: dict[str, Any] | None
@@ -198,6 +202,10 @@ class FanvilOptionsFlow(OptionsFlowWithReload):
                     vol.Required(
                         CONF_ACTION_URL,
                         default=options.get(CONF_ACTION_URL, DEFAULT_ACTION_URL),
+                    ): bool,
+                    vol.Required(
+                        CONF_CAMERA_AUDIO,
+                        default=options.get(CONF_CAMERA_AUDIO, DEFAULT_CAMERA_AUDIO),
                     ): bool,
                     vol.Optional(
                         CONF_HA_URL,

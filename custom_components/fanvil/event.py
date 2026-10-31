@@ -20,9 +20,12 @@ PANEL_EVENTS = (
     "input_1_reset",
     "input_2_triggered",
     "input_2_reset",
+    "input_3_triggered",
+    "input_3_reset",
     "boot",
     "tamper",
     "motion",
+    "noise",
 )
 
 
@@ -52,6 +55,9 @@ class FanvilEvent(FanvilEntity, EventEntity):
         super().__init__(coordinator, f"event_{kind}")
         self._attr_translation_key = kind
         self._attr_event_types = list(types)
+        # Raw panel events: the doorbell and the motion, noise and tamper
+        # sensors cover them; enable for automations on anything else.
+        self._attr_entity_registry_enabled_default = kind != "panel"
 
     @property
     def available(self) -> bool:

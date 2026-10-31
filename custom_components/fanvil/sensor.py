@@ -74,6 +74,8 @@ class FanvilSensor(FanvilEntity, SensorEntity):
             self._attr_translation_placeholders = {"line": str(line)}
         # Calls are followed by the Call event; these are for troubleshooting.
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        # Firmware and IP address are on the device page; only uptime is on.
+        self._attr_entity_registry_enabled_default = kind == "uptime"
         if kind == "uptime":
             self._attr_device_class = SensorDeviceClass.DURATION
             self._attr_native_unit_of_measurement = UnitOfTime.SECONDS
@@ -113,6 +115,7 @@ class FanvilActionUrlSensor(FanvilEntity, SensorEntity):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = ["on", "partial", "off"]
+    _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator: FanvilCoordinator) -> None:
         super().__init__(coordinator, "action_url")
@@ -146,6 +149,7 @@ class FanvilLastOpeningSensor(FanvilEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     # The Door event is the main entity for openings.
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator: FanvilCoordinator) -> None:
         super().__init__(coordinator, "last_opening")

@@ -7,6 +7,8 @@ CONF_ACTION_URL = "action_url"
 CONF_HA_URL = "ha_url"
 CONF_WEBHOOK_ID = "webhook_id"
 DEFAULT_ACTION_URL = True
+CONF_CAMERA_AUDIO = "camera_audio"
+DEFAULT_CAMERA_AUDIO = True
 # Check the panel's Action URL keys every 10 minutes (provisioning may wipe them).
 ACTION_URL_RESYNC = 600
 EVENT_FANVIL = "fanvil_event"
@@ -17,6 +19,8 @@ DOOR_LOG_AFTER_RELAY = 2
 DOOR_LOG_INTERVAL = 60
 # Doorbell: the call button press arrives as "key" and as an outgoing call.
 DOORBELL_DEBOUNCE = 15
+# Motion, noise and tamper: the panel reports only the start; off after this.
+DETECTION_OFF_DELAY = 30
 # Speaker: audio converted for the panel is downloadable for 5 minutes.
 AUDIO_TTL = 300
 AUDIO_MAX_SECONDS = 300
@@ -72,13 +76,17 @@ def input_key(port: int) -> str:
 # device with the HTTP API is accepted; the others get an informational log line.
 TESTED_MODELS = frozenset({"i60", "i60k", "i62"})
 
+# Relays and inputs are numbered from 1; a missing port reads as empty
+# (i60K: 1 relay, 2 inputs; i62: 2 relays, 3 inputs).
+PORTS = (1, 2, 3, 4)
+
 # A returned key is
 # not enough to prove a physical port exists; verify the profile on real hardware.
 STATUS_FIELDS = (
     *(registration_key(line) for line in (1, 2)),
     *(call_key(line) for line in (0, 1, 2)),
-    *(relay_key(relay) for relay in (1, 2)),
-    *(input_key(port) for port in (1, 2)),
+    *(relay_key(relay) for relay in PORTS),
+    *(input_key(port) for port in PORTS),
 )
 
 

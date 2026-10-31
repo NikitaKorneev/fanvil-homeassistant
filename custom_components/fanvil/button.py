@@ -10,7 +10,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import FanvilConfigEntry
 from .api import FanvilError
-from .const import COMMAND_REFRESH_DELAY, PULSE_REFRESH_DELAY, relay_key
+from .const import COMMAND_REFRESH_DELAY, PORTS, PULSE_REFRESH_DELAY, relay_key
 from .coordinator import FanvilCoordinator
 from .entity import FanvilEntity
 
@@ -24,7 +24,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             FanvilButton(coordinator, relay)
-            for relay in (1, 2)
+            for relay in PORTS
             if coordinator.data.get(relay_key(relay), "").lower() in ("open", "close")
         ]
         + [FanvilButton(coordinator, None)]

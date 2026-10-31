@@ -32,6 +32,8 @@ EVENT_KEYS: dict[str, str] = {
     "input_1_reset": "cti.vimCti.Input1.RstUrl",
     "input_2_triggered": "cti.vimCti.Input2.Url",
     "input_2_reset": "cti.vimCti.Input2.RstUrl",
+    "input_3_triggered": "cti.vimCti.Input3.Url",
+    "input_3_reset": "cti.vimCti.Input3.RstUrl",
     "sip_registered": "cti.RegOnUrl",
     "sip_unregistered": "cti.RegOffUrl",
     "sip_failed": "cti.RegFailedUrl",
@@ -40,6 +42,7 @@ EVENT_KEYS: dict[str, str] = {
     "key": "cti.KeyTriggerUrl",
     "tamper": "cti.vimCti.TamperUrl",
     "motion": "cti.vimCti.MotionDetectionUrl",
+    "noise": "cti.vimCti.NoiseAlarmUrl",
 }
 ENABLED_KEY = "cti.ActionUrlEnabled"
 
@@ -55,7 +58,9 @@ VARIABLES = (
 )
 
 CALL_EVENTS = ("incoming", "outgoing", "answered", "ended", "missed")
-DEVICE_EVENTS = ("key", "boot", "tamper", "motion")
+DEVICE_EVENTS = ("key", "boot", "tamper", "motion", "noise")
+# Reported only when they start: binary sensors turn off after a delay.
+DETECTION_EVENTS = ("motion", "noise", "tamper")
 
 STATUS_OURS = "ours"
 STATUS_FOREIGN = "foreign"

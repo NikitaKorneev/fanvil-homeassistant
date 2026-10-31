@@ -167,7 +167,7 @@ async def test_only_explicit_calls_send_control_commands(api_module):
             }
         ]
         with pytest.raises(ValueError):
-            await client.async_pulse_relay(3)
+            await client.async_pulse_relay(5)
         assert len(commands) == 1
         await client.async_reboot()
         assert commands[-1] == {"type": {"cmd": "reboot"}}
@@ -402,5 +402,8 @@ def test_action_url_request_parsing():
     )
     assert data == {"event": "incoming", "mac": "0c383e63fc1f", "remote": "sip:100@pbx"}
     assert action_url.parse_request({"event": "rm -rf"}) is None
+    assert action_url.parse_request({"event": "noise"}) == {"event": "noise"}
+    assert action_url.EVENT_KEYS["noise"] == "cti.vimCti.NoiseAlarmUrl"
+    assert action_url.EVENT_KEYS["input_3_reset"] == "cti.vimCti.Input3.RstUrl"
     assert action_url.valid_ipv4("172.17.0.80")
     assert not action_url.valid_ipv4("panel.local")

@@ -18,6 +18,7 @@ from .const import (
     IDENTITY_FIELDS,
     MAC,
     MODEL,
+    PORTS,
     READ_ATTEMPTS,
     READ_RETRY_DELAY,
     REQUEST_GAP,
@@ -353,7 +354,7 @@ class FanvilClient:
 
     async def async_relay(self, relay: int, action: str, mode: str) -> None:
         """Control one relay: on/off, once (panel timeout) or long (stay)."""
-        if relay not in (1, 2) or action not in ("on", "off"):
+        if relay not in PORTS or action not in ("on", "off"):
             raise ValueError("Invalid relay command")
         if mode not in ("once", "long"):
             raise ValueError("Invalid relay mode")

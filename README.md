@@ -16,11 +16,12 @@ without cloud services.
 | 📹 **Camera** | Live video (RTSP, H.264): main and sub stream, snapshots, optional sound |
 | 🔔 **Doorbell** | The call button as a Home Assistant doorbell event |
 | 🚪 **Door log** | Who opened the door and how (card, PIN, call, exit button, API) and denied attempts |
+| 👀 **Motion, noise, tamper** | Binary sensors from the panel's detectors |
 | 🔊 **Speaker** | Text-to-speech and audio files on the panel speaker, volume slider |
 | 🔓 **Door relays** | "Open" pulse button and a "hold open" switch for every relay; relay state updates instantly |
 | 📞 **Calls** | Incoming, outgoing, answered, ended and missed calls as events, with the caller's number |
 | ☎️ **SIP** | Registration status, line number and server for each SIP line |
-| 🚪 **Inputs & panel events** | Door sensors / exit buttons, call button, tamper, motion, boot |
+| 🚪 **Inputs** | Door sensors and exit buttons (up to 4 inputs) |
 | ⚙️ **Maintenance** | Reboot button, firmware, IP address, uptime, diagnostics download |
 
 - **Instant events.** The integration configures the panel's *Action URL* to report events to a
@@ -76,31 +77,41 @@ The RTSP video uses the same credentials.
 | Option | Default | Meaning |
 |---|---|---|
 | Configure Action URL on the panel | on | Write webhook URLs to the panel for instant events |
+| Sound in the camera streams | on | Turns on the panel microphone in RTSP (a recorder connected to the panel will record it too) |
 | Home Assistant address for the panel | automatic | Override if the panel cannot reach the detected address |
 | Polling interval | 30 s | How often the state is read over the HTTP API |
 
 ## Entities
 
+Enabled by default:
+
 | Entity | Description |
 |---|---|
 | `camera` Camera main stream | `camera.<device>_main_stream`: RTSP main stream (e.g. 1280×720), snapshot via API |
 | `camera` Camera sub stream | `camera.<device>_sub_stream`: lower resolution (e.g. 640×480, ~0.5 Mbit/s) for dashboards and mobile |
-| `binary_sensor` Relay N active, Input N open | Real relay and input states |
+| `binary_sensor` Relay N active, Input N open | Real relay and input states (as many as the panel has, up to 4) |
+| `binary_sensor` Motion, Noise, Tamper | On when the panel reports it, off after 30 s |
 | `event` Doorbell | `ring` when the call button is pressed (device class *doorbell*) |
 | `event` Door | `opened` / `denied` from the door log (attributes: `method`, `user`, `relay`, `card`, `sip_number`, `reason`) |
 | `event` Call | `incoming`, `outgoing`, `answered`, `ended`, `missed` (attributes: `remote`, `display_remote`, `line`, `duration`) |
-| `event` Panel event | `key`, `input_N_triggered` / `input_N_reset`, `boot`, `tamper`, `motion` |
 | `media_player` Speaker | Plays TTS and audio on the panel (`tts.speak`, `media_player.play_media`) |
 | `number` Volume | 0–9, sets talk, ring and tone volume at once (talk volume never below 1); the three panel values as attributes |
 | `button` Open relay N (pulse) | Opens the relay for the time set on the panel |
 | `switch` Relay N (hold open) | On while held open by this switch; a pulse, card or call does not turn it on |
-| `switch` Camera audio | Configuration: microphone sound in both camera streams |
 | `button` Restart | Reboots the panel (configuration) |
-| `sensor` Last door opening | Diagnostics: time of the last door log entry; method, user and result as attributes |
-| `sensor` Line N call state | Diagnostics: raw call state of each line (the *Call* event is the main entity) |
-| `sensor` SIP N number, SIP N registration code; `binary_sensor` SIP N registered | Diagnostics: SIP |
-| `sensor` Action URL | Diagnostics: `on` / `partial` (some events are used by another system) / `off` |
-| `sensor` Firmware, IP address, Uptime | Diagnostics |
+| `sensor` Uptime | Diagnostics |
+| `binary_sensor` SIP N registered | Diagnostics; without SIP the call button does not ring (lines without an account are disabled) |
+
+Disabled by default (enable on the device page when needed):
+
+| Entity | Description |
+|---|---|
+| `event` Panel event | Raw events: `key`, `input_N_triggered` / `input_N_reset`, `boot`, `tamper`, `motion`, `noise` |
+| `sensor` Last door opening | Time of the last door log entry; method, user and result as attributes |
+| `sensor` Line N call state | Raw call state of each line |
+| `sensor` SIP N number, SIP N registration code | SIP account and registration code |
+| `sensor` Action URL | `on` / `partial` (some events are used by another system) / `off` |
+| `sensor` Firmware, IP address | Also shown on the device page |
 
 The camera names start with *Camera*, so on the device page both streams stay together at the top of
 the list. Updating from 0.4.0 renames `camera.<device>` to `camera.<device>_main_stream` (unless you
@@ -177,9 +188,17 @@ shown by the *Action URL* sensor (or set in the options).
 
 ### Camera sound
 
-*Camera audio* turns on the microphone in both RTSP streams. The panel sends G.711 (8 kHz): the
-live view plays it over WebRTC (go2rtc, part of the default configuration). Home Assistant's HLS
-fallback keeps only AAC and MP3, so it plays the video without sound.
+The option *Sound in the camera streams* (on by default) turns on the microphone in both RTSP
+streams. The panel sends G.711 (8 kHz): the live view plays it over WebRTC (go2rtc, part of the
+default configuration). Home Assistant's HLS fallback keeps only AAC and MP3, so it plays the video
+without sound.
+
+### Motion, noise and tamper
+
+The panel reports these through Action URL (`cti.vimCti.MotionDetectionUrl`, `NoiseAlarmUrl`,
+`TamperUrl`) only when they start, so the binary sensors turn off 30 s after the last report. Motion
+and noise detection must be enabled on the panel itself (web interface). Without Action URL these
+sensors are not created.
 
 ## Known firmware behaviour
 
@@ -206,6 +225,7 @@ Handled by the integration, listed here for troubleshooting (i60K, firmware 2.12
   only sends an HTTP request to Home Assistant (no SIP call) — a pure smart doorbell.
 - **Guest codes:** temporary PINs and cards with time periods (`api/persons`, `api/period`).
 - **Call control:** dial a number and hang up from Home Assistant.
+- **Visitor snapshot:** an `image` entity with the frame of the last ring and door opening.
 - **Self-test:** a button for the built-in speaker and microphone test.
 - **Server-side access decisions** (firmware 2.12.55+): Home Assistant decides whether a card or
   PIN opens the door.
